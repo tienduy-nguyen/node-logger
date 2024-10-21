@@ -6,20 +6,7 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
-            "complexity": {
-                "noForEach": "off"
-            },
-            "correctness": {
-                "noVoidTypeReturn": "off"
-            },
-            "style": {
-                "noParameterAssign": "off"
-            },
-            "suspicious": {
-                "noImplicitAnyLet": "off",
-                "noExplicitAny": "off"
-            }
+            "recommended": true
         }
     },
     "formatter": {

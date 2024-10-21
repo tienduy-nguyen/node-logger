@@ -78,18 +78,15 @@ internals.isEnabled = (namespace, level): boolean => {
     let nsLevel = internals.level || 0
     let nsMatch = false
     const internalNamespaces = internals.namespaces
-    internalNamespaces
-        .slice()
-        .reverse()
-        .forEach((ns) => {
-            if (ns.regex?.test(namespace)) {
-                nsMatch = true
-                if (ns.level) {
-                    nsLevel = ns.level
-                    return false
-                }
+    for (const ns of internalNamespaces.slice().reverse()) {
+        if (ns.regex?.test(namespace)) {
+            nsMatch = true
+            if (ns.level) {
+                nsLevel = ns.level
+                break
             }
-        })
+        }
+    }
 
     return nsMatch && level >= nsLevel
 }
@@ -102,13 +99,13 @@ internals.isEnabled = (namespace, level): boolean => {
  * @return {Logger}
  */
 export const createLogger = (namespace?: string, canForceWrite?: boolean): Logger => {
-    namespace = namespace || ''
+    const definedNamespace = namespace || ''
 
-    let logger = internals.loggers?.[namespace]
+    let logger = internals.loggers?.[definedNamespace]
     if (logger) return logger
 
-    logger = syncLogger({} as Logger, namespace, canForceWrite)
-    if (internals.loggers) internals.loggers[namespace] = logger
+    logger = syncLogger({} as Logger, definedNamespace, canForceWrite)
+    if (internals.loggers) internals.loggers[definedNamespace] = logger
 
     return logger
 }
@@ -120,16 +117,19 @@ export const createLogger = (namespace?: string, canForceWrite?: boolean): Logge
 export const setNamespaces = (namespace: string): void => {
     internals.namespaces = []
 
-    if (!namespace) return syncLoggers()
+    if (!namespace) {
+        syncLoggers()
+        return
+    }
 
     const splitNamespaces = namespace.replace(/\s/g, '').split(',')
 
-    splitNamespaces.forEach((name) => {
+    for (const name of splitNamespaces) {
         const parsedNamespace = parseNamespace(name)
-        if (!parsedNamespace) return
+        if (!parsedNamespace) continue
 
         internals.namespaces.push(parsedNamespace)
-    })
+    }
 
     syncLoggers()
 }
@@ -154,14 +154,14 @@ export const setLevel = (level: LogLevel): void => {
  * @param {Array<OutputAdapter>|OutputAdapter} outputAdapters
  */
 export const setOutput = (outputAdapters?: OutputAdapter[] | OutputAdapter): void => {
-    if (!outputAdapters) outputAdapters = []
-    if (!Array.isArray(outputAdapters)) outputAdapters = [outputAdapters]
+    let adapters = outputAdapters || []
+    if (!Array.isArray(adapters)) adapters = [adapters]
 
-    outputAdapters.forEach((output) => {
+    for (const output of adapters) {
         if (typeof output !== 'function') throw new Error(`Invalid output: '${output}'`)
-    })
+    }
 
-    internals.outputs = outputAdapters
+    internals.outputs = adapters
 }
 
 /**
@@ -193,7 +193,7 @@ export const parseNamespace = (namespace: string): NameSpaceConfig | null => {
     const matches = /([^=]*)(=(.*))?/.exec(namespace)
     if (!matches) return null
 
-    let level
+    let level: number | undefined
     if (matches[3]) {
         const idx = internals.levels?.findIndex((l) => l === matches[3])
 
@@ -231,27 +231,20 @@ export const log = (
     data?: Record<string, unknown>,
     forceLogging?: boolean | Record<string, unknown>
 ): void => {
-    if (isObject(message)) {
-        forceLogging = data
-        data = message
-        message = contextId
-        contextId = null
-    }
-
-    contextId = contextId || id()
-    const time = new Date()
+    const outputContextId = contextId || id()
     const logInstance: Log = {
         level,
-        time,
+        time: new Date(),
         namespace,
-        contextId,
+        contextId: outputContextId,
         meta: {},
-        message: message || contextId,
-        data,
+        message: typeof message === 'string' ? message : outputContextId,
+        data: isObject(message) ? message : data,
     }
+    const outputLogging = isObject(message) ? data : forceLogging
     if (internals.globalContext) logInstance.meta = Object.assign({}, internals.globalContext)
 
-    if (forceLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
+    if (outputLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
 }
 
 /**
@@ -259,9 +252,11 @@ export const log = (
  * @param {Log} logInstance
  */
 export const write = (logInstance: Log): void => {
-    internals.outputs?.forEach((outputFn) => {
-        outputFn(logInstance)
-    })
+    if (internals.outputs) {
+        for (const outputFn of internals.outputs) {
+            outputFn(logInstance)
+        }
+    }
 }
 
 /**
