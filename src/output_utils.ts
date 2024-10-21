@@ -32,19 +32,5 @@ export const stringify = (log: Record<string, unknown>): string => {
     }
 }
 
-/**
- * Used to override error toJSON function to customize output
- * @return {object}
- */
-export const errorToJson = (obj: Record<string, unknown>): Record<string, unknown> => {
-    const result: Record<string, unknown> = {}
-
-    for (const key of Object.getOwnPropertyNames(obj)) {
-        result[key] = obj[key]
-    }
-
-    return result
-}
-
 export const isObject = (val: unknown): val is Record<string, unknown> =>
     !!val && typeof val === 'object' && !Array.isArray(val)
