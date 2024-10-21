@@ -1,5 +1,13 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Internal, Logger, LogLevel, Log, NameSpaceConfig, OutputAdapter, LogMethod } from './definitions'
+import type {
+    Internal,
+    Log,
+    LogLevel,
+    LogMethod,
+    Logger,
+    NameSpaceConfig,
+    OutputAdapter,
+} from './definitions'
 
 import * as outputs from './output_adapters'
 import * as outputUtils from './output_utils'
@@ -189,7 +197,8 @@ export const parseNamespace = (namespace: string): NameSpaceConfig | null => {
     if (matches[3]) {
         const idx = internals.levels?.findIndex((l) => l === matches[3])
 
-        if (idx === undefined || idx < 0) throw new Error(`Level ${matches[3]} is not a valid log level : ${internals.levels}`)
+        if (idx === undefined || idx < 0)
+            throw new Error(`Level ${matches[3]} is not a valid log level : ${internals.levels}`)
         level = idx
     }
 
@@ -231,10 +240,18 @@ export const log = (
 
     contextId = contextId || id()
     const time = new Date()
-    const logInstance: Log = { level, time, namespace, contextId, meta: {}, message: message || contextId, data }
+    const logInstance: Log = {
+        level,
+        time,
+        namespace,
+        contextId,
+        meta: {},
+        message: message || contextId,
+        data,
+    }
     if (internals.globalContext) logInstance.meta = Object.assign({}, internals.globalContext)
 
-    if(forceLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
+    if (forceLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
 }
 
 /**
@@ -266,10 +283,15 @@ export const syncLogger = (logger: Logger, namespace: string, canForceWrite?: bo
         internals.levels.forEach((level, idx) => {
             if (level === 'none') return
             const levelIsEnabled = internals.isEnabled?.(namespace, idx) ?? false
-            if ( levelIsEnabled || canForceWrite) {
+            if (levelIsEnabled || canForceWrite) {
                 enabledLevels[level] = levelIsEnabled
 
-                logger[level] = ((contextId: string, message: string, data?: Record<string, unknown>, forceLogging?: boolean) => {
+                logger[level] = ((
+                    contextId: string,
+                    message: string,
+                    data?: Record<string, unknown>,
+                    forceLogging?: boolean
+                ) => {
                     log(namespace, level, contextId, message, data, forceLogging)
                 }) as LogMethod
             } else {
@@ -312,5 +334,5 @@ export default {
     setGlobalContext,
     id,
     outputUtils,
-    outputs
+    outputs,
 }

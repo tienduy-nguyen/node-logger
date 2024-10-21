@@ -37,11 +37,12 @@ export const stringify = (log: Record<string, unknown>): string => {
 export const errorToJson = (obj: any): Record<string, unknown> => {
     const result: Record<string, unknown> = {}
 
-    Object.getOwnPropertyNames(obj).forEach(function (key) {
+    Object.getOwnPropertyNames(obj).forEach((key) => {
         result[key] = obj[key]
     }, obj)
 
     return result
 }
 
-export const isObject = (val: unknown): val is Record<string, unknown> => !!val && typeof val === 'object' && !Array.isArray(val)
+export const isObject = (val: unknown): val is Record<string, unknown> =>
+    !!val && typeof val === 'object' && !Array.isArray(val)

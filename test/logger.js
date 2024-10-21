@@ -1,4 +1,3 @@
-'use strict'
 /* eslint-disable no-shadow */
 
 const test = require('ava')
@@ -26,7 +25,7 @@ test('A logger instance should only accept functions', (t) => {
         () => {
             logger.setOutput('invalid')
         },
-        { instanceOf: Error },
+        { instanceOf: Error }
     )
 
     t.is(error.message, `Invalid output: 'invalid'`)
@@ -37,7 +36,7 @@ test('A logger instance should only accept allowed levels', (t) => {
         () => {
             logger.setLevel('invalid')
         },
-        { instanceOf: Error },
+        { instanceOf: Error }
     )
 
     t.is(error.message, `Invalid level: 'invalid'`)

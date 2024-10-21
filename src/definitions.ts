@@ -26,9 +26,7 @@ export interface Logger {
     canForceWrite?: boolean
 }
 
-export interface OutputAdapter {
-    (log: Log): void
-}
+export type OutputAdapter = (log: Log) => void
 
 export interface LogMethod {
     (contextId: string, message: string, data?: unknown, forceLogging?: boolean): void

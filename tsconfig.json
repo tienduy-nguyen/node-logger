@@ -14,8 +14,8 @@
         "noUncheckedIndexedAccess": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
+        "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/**/*","test/**/*.ts"],
+    "include": ["src/**/*", "test/**/*.ts"],
     "exclude": []
 }

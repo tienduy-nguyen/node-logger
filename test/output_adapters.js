@@ -1,4 +1,3 @@
-'use strict'
 /* eslint-disable no-shadow */
 
 const test = require('ava')

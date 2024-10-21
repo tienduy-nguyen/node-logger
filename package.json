@@ -6,14 +6,8 @@
     "version": "2.1.1",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
-    "files": [
-        "/lib"
-    ],
-    "tags": [
-        "logger",
-        "lightweight",
-        "namespaces"
-    ],
+    "files": ["/lib"],
+    "tags": ["logger", "lightweight", "namespaces"],
     "repository": {
         "type": "git",
         "url": "https://github.com/ekino/node-logger.git"
@@ -32,6 +26,7 @@
         "uuid": "10.x"
     },
     "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
         "@commitlint/config-conventional": "19.5.0",
         "@types/node": "22.7.7",
         "@types/uuid": "10.0.0",
@@ -48,37 +43,24 @@
         "typescript": "5.6.3"
     },
     "scripts": {
-        "fmt": "prettier --color --write \"{*,test/**/*}.{js,ts}\" --cache",
-        "check-fmt": "prettier --list-different \"{*,test/**/*}.{js,ts}\"",
+        "lint": "biome check --write",
+        "check": "biome check",
         "build": "tsc --build tsconfig.lib.json",
         "prepublishOnly": "rm -rf lib && yarn build",
         "test": "ava",
         "test-cover": "nyc ava",
         "coverage": "nyc ava | coveralls",
         "version": "echo ${npm_package_version}",
-        "lint": "eslint .",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
-    "eslintIgnore": [
-        "lib",
-        "examples"
-    ],
+    "eslintIgnore": ["lib", "examples"],
     "ava": {
-        "files": [
-            "test/**/*.js"
-        ],
-        "extensions": [
-            "js"
-        ],
-        "require": [
-            "ts-node/register"
-        ]
+        "files": ["test/**/*.js"],
+        "extensions": ["js"],
+        "require": ["ts-node/register"]
     },
     "nyc": {
-        "reporter": [
-            "lcov",
-            "text-lcov"
-        ]
+        "reporter": ["lcov", "text-lcov"]
     },
     "packageManager": "yarn@4.5.1"
 }
