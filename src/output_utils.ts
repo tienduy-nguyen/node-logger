@@ -8,7 +8,7 @@ type ReplacerFunction = (key: string | number, value: unknown) => unknown
 export const getCircularReplacer = (): ReplacerFunction => {
     const seen = new WeakSet()
     return (key: string | number, value: unknown): unknown => {
-        if (typeof value === 'object' && value !== null) {
+        if (isObject(value)) {
             if (seen.has(value)) {
                 return
             }

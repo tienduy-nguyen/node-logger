@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo -e '\e[32mRUN ESM EXAMPLES:\e[0m'
+for file in examples/*.js; do
+    node "$file"
+done

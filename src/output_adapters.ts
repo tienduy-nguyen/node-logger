@@ -1,4 +1,4 @@
-import colors from 'colors/safe'
+import { colors } from './colors'
 import type { Log, LogColor, LogLevel, Output } from './definitions'
 import * as outputUtils from './output_utils'
 const prettyOutput = require('prettyoutput')

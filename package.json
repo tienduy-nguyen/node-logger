@@ -21,7 +21,6 @@
         "node": ">=14"
     },
     "dependencies": {
-        "colors": "1.x",
         "prettyoutput": "1.x",
         "uuid": "10.x"
     },
@@ -51,6 +50,7 @@
         "test-cover": "nyc ava",
         "coverage": "nyc ava | coveralls",
         "version": "echo ${npm_package_version}",
+        "examples": "node examples/index.js",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
     "eslintIgnore": ["lib", "examples"],
