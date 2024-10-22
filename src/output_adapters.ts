@@ -1,3 +1,4 @@
+import { Writable } from 'node:stream'
 import { colors } from './colors'
 import type { Log, LogColor, LogLevel, Output } from './definitions'
 import * as outputUtils from './output_utils'
@@ -44,7 +45,7 @@ export const prettyTime = (time?: Date): string | undefined => {
 }
 
 /**
- * Log with pretty output formater in stdout
+ * Log with pretty output formatter in stdout
  * @param {Log} log
  */
 export const pretty = (log: Log): void => {
@@ -57,8 +58,7 @@ export const pretty = (log: Log): void => {
 
     const result = `${infos}${colors[levelColor](log.message || '')}\n${prettyOutput(output, { maxDepth: 6 }, 2)}`
 
-    process.stdout.write(result)
-    process.stdout.write('\n')
+    logStream.write(`${result}\n`)
 }
 
 /**
@@ -78,6 +78,11 @@ export const json = (log: Log): void => {
 
     const result = outputUtils.stringify(output)
 
-    process.stdout.write(result)
-    process.stdout.write('\n')
+    logStream.write(`${result}\n`)
 }
+
+export const logStream = new Writable({
+    write(chunk, encoding, callback) {
+        process.stdout.write(chunk, encoding, callback)
+    },
+})

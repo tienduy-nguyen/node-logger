@@ -6,14 +6,8 @@
     "version": "2.1.1",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
-    "files": [
-        "/lib"
-    ],
-    "tags": [
-        "logger",
-        "lightweight",
-        "namespaces"
-    ],
+    "files": ["/lib"],
+    "tags": ["logger", "lightweight", "namespaces"],
     "repository": {
         "type": "git",
         "url": "https://github.com/ekino/node-logger.git"
@@ -57,26 +51,14 @@
         "examples": "node examples/index.js",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
-    "eslintIgnore": [
-        "lib",
-        "examples"
-    ],
+    "eslintIgnore": ["lib", "examples"],
     "ava": {
-        "files": [
-            "test/**/*.js"
-        ],
-        "extensions": [
-            "js"
-        ],
-        "require": [
-            "ts-node/register"
-        ]
+        "files": ["test/**/*.js"],
+        "extensions": ["js"],
+        "require": ["ts-node/register"]
     },
     "nyc": {
-        "reporter": [
-            "lcov",
-            "text-lcov"
-        ]
+        "reporter": ["lcov", "text-lcov"]
     },
     "packageManager": "yarn@4.5.1"
 }

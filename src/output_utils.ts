@@ -9,9 +9,7 @@ export const getCircularReplacer = (): ReplacerFunction => {
     const seen = new WeakSet()
     return (key: string | number, value: unknown): unknown => {
         if (isObject(value)) {
-            if (seen.has(value)) {
-                return
-            }
+            if (seen.has(value)) return
             seen.add(value)
         }
         return value
