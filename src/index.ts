@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from 'uuid'
 import type {
-    Internal,
     Log,
     LogLevel,
     LogMethod,
     Logger,
+    LoggerConfig,
+    LoggerMethods,
     NameSpaceConfig,
     OutputAdapter,
 } from './definitions'
@@ -12,75 +13,50 @@ import type {
 import * as outputs from './output_adapters'
 import * as outputUtils from './output_utils'
 
-/**
- * @typedef {Function} LoggerLogFunction
- * @param {String} [contextId] - a identifier used to group log associated to a seeam task / request
- * @param {String} message - A description
- * @param {Object} [data] - Anything useful to understand the error
- */
-
-/**
- * @typedef {Function} LoggerIsEnabledFunction
- * @param {String} level
- * @returns {Boolean} true if level is enabled
- */
-
-/**
- * @typedef {Object} Logger
- * @property {LoggerLogFunction} trace - Log to trace level
- * @property {LoggerLogFunction} debug - Log to debug level
- * @property {LoggerLogFunction} info  - Log to info level
- * @property {LoggerLogFunction} warn  - Log to warning level
- * @property {LoggerLogFunction} error - Log to error level
- * @property {LoggerIsEnabledFunction} isLoggerEnabled - check if logger is enabled for a level
- */
-
-/**
- * @typedef {object} Log
- * @property {string} level       - log level (debug, info, warn, error)
- * @property {Date} time          - log time
- * @property {string} namespace   - log namespace
- * @property {string} contextId   - contextId
- * @property {object} meta        - Some meta and additional data from globalContext
- * @property {string} message     - log message
- * @property {object} [data]      - Additional data to understand log message
- */
-
-/**
- * @typedef {Function} OutputAdapter
- * @param {Log} log to write
- */
-
-/**
- * @typedef {Object} NamespaceConfig
- * @property {number} [level]
- * @property {RegExp|null} regex
- */
-
-/************* INTERNALS *************/
-export const internals: Internal = {
+/************* LOCAL STATE *************/
+const defaultConfig: LoggerConfig = {
     loggers: {},
     levels: ['trace', 'debug', 'info', 'warn', 'error', 'none'],
     outputs: [outputs.json],
-    level: undefined,
+    level: 3, // default to warn
     namespaces: [],
     globalContext: {},
 }
 
-/**
- * True if both namespace and level are enabled.
- * @param {String} namespace
- * @param {String} level
- * @return {Boolean} true if enabled
- */
-internals.isEnabled = (namespace, level): boolean => {
-    let nsLevel = internals.level || 0
+/************* HELPER FUNCTION *************/
+
+const log = (
+    namespace: string,
+    level: LogLevel,
+    contextId: string | undefined,
+    message: string | Record<string, unknown> | undefined,
+    data: Record<string, unknown> | undefined,
+    forceLogging: boolean | undefined,
+    config: LoggerConfig
+) => {
+    const definedContextId = contextId || id()
+    const logInstance: Log = {
+        level,
+        time: new Date(),
+        namespace,
+        contextId: definedContextId,
+        meta: { ...config.globalContext },
+        message: typeof message === 'string' ? message : definedContextId,
+        data: outputUtils.isObject(message) ? message : data,
+    }
+
+    if (forceLogging || config.loggers[namespace]?.isLevelEnabled(level)) {
+        writeLog(logInstance, config)
+    }
+}
+
+const isLevelEnabled = (namespace: string, level: number, config: LoggerConfig): boolean => {
+    let nsLevel = config.level
     let nsMatch = false
-    const internalNamespaces = internals.namespaces
-    for (const ns of internalNamespaces.slice().reverse()) {
+    for (const ns of config.namespaces.slice().reverse()) {
         if (ns.regex?.test(namespace)) {
             nsMatch = true
-            if (ns.level) {
+            if (ns.level !== undefined) {
                 nsLevel = ns.level
                 break
             }
@@ -90,77 +66,97 @@ internals.isEnabled = (namespace, level): boolean => {
     return nsMatch && level >= nsLevel
 }
 
-/************* EXPORTS *************/
-/**
- * @typedef {Function} createLogger
- * @param {String} [namespace]
- * @param {boolean} canForceWrite
- * @return {Logger}
- */
-export const createLogger = (namespace?: string, canForceWrite?: boolean): Logger => {
-    const definedNamespace = namespace || ''
+const writeLog = (logInstance: Log, config: LoggerConfig): void => {
+    for (const output of config.outputs) {
+        output(logInstance)
+    }
+}
 
-    let logger = internals.loggers?.[definedNamespace]
-    if (logger) return logger
+const parseNamespace = (namespace: string): NameSpaceConfig | undefined => {
+    const matches = /([^=]*)(=(.*))?/.exec(namespace)
+    if (!matches) return undefined
 
-    logger = syncLogger({} as Logger, definedNamespace, canForceWrite)
-    if (internals.loggers) internals.loggers[definedNamespace] = logger
+    const regex = new RegExp(`^${matches[1]?.replace(/\*/g, '.*?')}$`)
+    const level = matches[3] ? defaultConfig.levels.indexOf(matches[3] as LogLevel) : undefined
+    return { regex, level }
+}
 
-    return logger
+/************* EXPORT FUNCTIONS *************/
+
+export const createLogger = (
+    namespace = '',
+    canForceWrite = false,
+    config = defaultConfig
+): Logger => {
+    if (config.loggers[namespace]) return config.loggers[namespace]
+
+    const enabledLevels: Record<LogLevel, boolean | undefined> = {
+        trace: undefined,
+        debug: undefined,
+        info: undefined,
+        warn: undefined,
+        error: undefined,
+        none: undefined,
+    }
+    const logger: LoggerMethods = {}
+
+    config.levels.forEach((level, idx) => {
+        const levelIsEnabled = isLevelEnabled(namespace, idx, config) || canForceWrite
+        enabledLevels[level] = levelIsEnabled
+        if (levelIsEnabled) {
+            logger[level] = ((
+                contextId: string,
+                message: string,
+                data?: Record<string, unknown>,
+                forceLogging?: boolean
+            ) => {
+                log(namespace, level, contextId, message, data, forceLogging, config)
+            }) as LogMethod
+        } else {
+            logger[level] = () => {}
+        }
+    })
+
+    logger.isLevelEnabled = (level: LogLevel) => enabledLevels[level]
+    logger.canForceWrite = canForceWrite
+
+    // Cache the logger
+    config.loggers[namespace] = logger as Logger
+    return logger as Logger
 }
 
 /**
- * Define enabled / disabled namespaces
- * @param {string} namespace
+ * Return an id that can be used as a contextId
  */
-export const setNamespaces = (namespace: string): void => {
-    internals.namespaces = []
+export const id = (): string => uuidv4()
 
-    if (!namespace) {
-        syncLoggers()
-        return
-    }
-
-    const splitNamespaces = namespace.replace(/\s/g, '').split(',')
-
-    for (const name of splitNamespaces) {
-        const parsedNamespace = parseNamespace(name)
-        if (!parsedNamespace) continue
-
-        internals.namespaces.push(parsedNamespace)
-    }
-
-    syncLoggers()
+/**
+ * Define enabled / disabled namespaces
+ */
+export const setNamespaces = (namespaceStr: string, config = defaultConfig): void => {
+    config.namespaces = namespaceStr
+        .split(',')
+        .map(parseNamespace)
+        .filter(Boolean) as NameSpaceConfig[]
 }
 
 /**
  * Change log level
- * @param {string} level - one of trace, debug, info, warn, error
  */
-export const setLevel = (level: LogLevel): void => {
-    if (!internals.levels?.includes(level)) {
-        throw new Error(`Invalid level: '${level}'`)
-    }
-
-    // internally store corresponding level index
-    internals.level = internals.levels?.indexOf(level)
-
-    syncLoggers()
+export const setLevel = (level: LogLevel, config = defaultConfig): void => {
+    const levelIndex = config.levels.indexOf(level)
+    if (levelIndex === -1) throw new Error(`Invalid log level: ${level}`)
+    config.level = levelIndex
 }
 
 /**
  * Set outputs transport to use
- * @param {Array<OutputAdapter>|OutputAdapter} outputAdapters
  */
-export const setOutput = (outputAdapters?: OutputAdapter[] | OutputAdapter): void => {
-    let adapters = outputAdapters || []
-    if (!Array.isArray(adapters)) adapters = [adapters]
-
-    for (const output of adapters) {
-        if (typeof output !== 'function') throw new Error(`Invalid output: '${output}'`)
-    }
-
-    internals.outputs = adapters
+export const setOutput = (
+    outputAdapters: OutputAdapter[] | OutputAdapter,
+    config = defaultConfig
+): void => {
+    config.outputs = Array.isArray(outputAdapters) ? outputAdapters : [outputAdapters]
 }
 
 /**
@@ -168,147 +164,12 @@ export const setOutput = (outputAdapters?: OutputAdapter[] | OutputAdapter): voi
  * useful to append application/service name globally for example.
  * Be warned this context will be added to all logs,
  * even those from third party libraries if they use this module.
- * @param {Object} context - The object holding default context data
  */
-export const setGlobalContext = (context: Record<string, unknown>): void => {
-    internals.globalContext = context
-}
-
-/**
- * @type {function}
- * Return an id that can be used as a contextId
- * @return {string}
- */
-export const id = (): string => {
-    return uuidv4()
-}
-
-/**
- * Parse a namespace to extract level, namespace (eg: ns1:subns1=info)
- * @param {string} namespace
- * @return {NamespaceConfig|null}
- */
-export const parseNamespace = (namespace: string): NameSpaceConfig | null => {
-    const matches = /([^=]*)(=(.*))?/.exec(namespace)
-    if (!matches) return null
-
-    let level: number | undefined
-    if (matches[3]) {
-        const idx = internals.levels?.findIndex((l) => l === matches[3])
-
-        if (idx === undefined || idx < 0)
-            throw new Error(`Level ${matches[3]} is not a valid log level : ${internals.levels}`)
-        level = idx
-    }
-
-    let pattern = matches[1]
-    if (!pattern) return null
-
-    pattern = pattern.replace(/\*/g, '.*?')
-    const regex = new RegExp(`^${pattern}$`)
-
-    const namespaceConfig: NameSpaceConfig = { regex }
-    if (level) namespaceConfig.level = level
-
-    return namespaceConfig
-}
-
-/**
- * Log method. Write to stdout as a JSON object
- * @param {String} namespace
- * @param {String} level
- * @param {String} [contextId]
- * @param {String} message
- * @param {Object} [data] - An object holding data to help understand the error
- * @param {boolean} forceLogging
- */
-export const log = (
-    namespace: string,
-    level: LogLevel,
-    contextId?: string | null,
-    message?: string | Record<string, unknown> | null,
-    data?: Record<string, unknown>,
-    forceLogging?: boolean | Record<string, unknown>
+export const setGlobalContext = (
+    context: Record<string, unknown>,
+    config = defaultConfig
 ): void => {
-    const outputContextId = contextId || id()
-    const isMessageObject = outputUtils.isObject(message)
-    const logInstance: Log = {
-        level,
-        time: new Date(),
-        namespace,
-        contextId: outputContextId,
-        meta: {},
-        message: typeof message === 'string' ? message : outputContextId,
-        data: isMessageObject ? message : data,
-    }
-    const outputLogging = isMessageObject ? data : forceLogging
-    if (internals.globalContext) logInstance.meta = Object.assign({}, internals.globalContext)
-
-    if (outputLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
-}
-
-/**
- * Write log using output adapter
- * @param {Log} logInstance
- */
-export const write = (logInstance: Log): void => {
-    if (internals.outputs) {
-        for (const outputFn of internals.outputs) {
-            outputFn(logInstance)
-        }
-    }
-}
-
-/**
- * Remove all properties but levels.
- * Levels contains a function that does nothing if namespace or level is disable.
- * If enabled, calls log function.
- * @param {Logger} logger
- * @param {String} namespace
- * @param {boolean} canForceWrite
- * @return {Logger}
- */
-export const syncLogger = (logger: Logger, namespace: string, canForceWrite?: boolean): Logger => {
-    for (const key in logger) {
-        delete logger[key as keyof Logger]
-    }
-
-    const enabledLevels: Record<string, boolean> = {}
-    if (internals.levels) {
-        internals.levels.forEach((level, idx) => {
-            if (level === 'none') return
-            const levelIsEnabled = internals.isEnabled?.(namespace, idx) ?? false
-            if (levelIsEnabled || canForceWrite) {
-                enabledLevels[level] = levelIsEnabled
-
-                logger[level] = ((
-                    contextId: string,
-                    message: string,
-                    data?: Record<string, unknown>,
-                    forceLogging?: boolean
-                ) => {
-                    log(namespace, level, contextId, message, data, forceLogging)
-                }) as LogMethod
-            } else {
-                enabledLevels[level] = false
-                logger[level] = () => {}
-            }
-        })
-
-        logger.isLevelEnabled = (level) => enabledLevels[level]
-    }
-    logger.canForceWrite = canForceWrite
-    return logger
-}
-
-/**
- * ReSync all loggers level functions to enable / disable them
- * This should be called when namespaces or levels are updated
- */
-export const syncLoggers = () => {
-    for (const [namespace, logger] of Object.entries(internals.loggers)) {
-        syncLogger(logger, namespace, logger.canForceWrite)
-    }
+    config.globalContext = { ...context }
 }
 
 /************* INIT *************/

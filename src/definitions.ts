@@ -33,14 +33,18 @@ export interface LogMethod {
     (message: string, data?: unknown, forceLogging?: boolean): void
 }
 
-export interface Internal {
+export interface LoggerMethods extends Partial<Record<LogLevel, LogMethod>> {
+    isLevelEnabled?: (level: LogLevel) => boolean | undefined
+    canForceWrite?: boolean
+}
+
+export interface LoggerConfig {
     loggers: Record<string, Logger>
     namespaces: NameSpaceConfig[]
     levels: LogLevel[]
-    level?: number
+    level: number
     outputs: OutputAdapter[]
     globalContext: Record<string, unknown>
-    isEnabled?(namespace: string, index: number): boolean
 }
 
 export type LogColor = 'red' | 'yellow' | 'blue' | 'white' | 'grey'
