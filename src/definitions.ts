@@ -48,3 +48,5 @@ export interface LoggerConfig {
 }
 
 export type LogColor = 'red' | 'yellow' | 'blue' | 'white' | 'grey'
+
+export type ReplacerFunction = (key: string | number, value: unknown) => unknown
