@@ -1,13 +1,39 @@
+const fastJson = require('fast-json-stringify')
+
+type ReplacerFunction = (key: string | number, value: unknown) => unknown
+
+const logSchema = {
+    title: 'Log',
+    type: 'object',
+    properties: {
+        level: { type: 'string' },
+        time: {
+            type: ['string', 'number', 'null'],
+        },
+        namespace: { type: 'string' },
+        contextId: { type: ['string', 'null'] },
+        message: { type: ['string', 'null'] },
+        meta: {
+            type: ['object', 'null'],
+            additionalProperties: true,
+        },
+        data: {
+            type: ['object', 'null'],
+            additionalProperties: true,
+        },
+    },
+    additionalProperties: true,
+}
+
+const fastStringifyLog = fastJson(logSchema)
+
 /**
  * Replace circular reference when used with JSON.stringify
  * Usage : JSON.stringify(element, getCircularReplacer())
  */
-
-type ReplacerFunction = (key: string | number, value: unknown) => unknown
-
 export const getCircularReplacer = (): ReplacerFunction => {
     const seen = new WeakSet()
-    return (key: string | number, value: unknown): unknown => {
+    return (_key: string | number, value: unknown): unknown => {
         if (isObject(value)) {
             if (seen.has(value)) return
             seen.add(value)
@@ -22,11 +48,11 @@ export const getCircularReplacer = (): ReplacerFunction => {
  * @param {*} log - json object
  * @returns {string} - stringified log or error log if can not stringify
  */
-export const stringify = (log: Record<string, unknown>): string => {
+export const stringifyLog = (log: Record<string, unknown>): string => {
     try {
-        return JSON.stringify(log)
+        return fastStringifyLog(log)
     } catch (e) {
-        return JSON.stringify(log, getCircularReplacer())
+        return fastStringifyLog(log, getCircularReplacer())
     }
 }
 

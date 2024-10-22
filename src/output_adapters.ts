@@ -1,8 +1,8 @@
+const prettyOutput = require('prettyoutput')
 import { Writable } from 'node:stream'
 import { colors } from './colors'
 import type { Log, LogColor, LogLevel, Output } from './definitions'
-import * as outputUtils from './output_utils'
-const prettyOutput = require('prettyoutput')
+import { stringifyLog } from './output_utils'
 
 /**
  * Object mapping log color and log level
@@ -76,7 +76,7 @@ export const json = (log: Log): void => {
         data: log.data,
     })
 
-    const result = outputUtils.stringify(output)
+    const result = stringifyLog(output)
 
     logStream.write(`${result}\n`)
 }

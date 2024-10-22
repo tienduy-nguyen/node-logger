@@ -21,6 +21,7 @@
         "node": ">=14"
     },
     "dependencies": {
+        "fast-json-stringify": "6.x",
         "prettyoutput": "1.x",
         "uuid": "10.x"
     },
@@ -42,7 +43,7 @@
     "scripts": {
         "lint": "biome check --write",
         "check": "biome check",
-        "build": "tsc --build tsconfig.lib.json",
+        "build": "rm -rf lib && tsc --build tsconfig.lib.json",
         "prepublishOnly": "rm -rf lib && yarn build",
         "test": "ava",
         "test-cover": "nyc ava",

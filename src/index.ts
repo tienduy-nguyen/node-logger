@@ -11,7 +11,6 @@ import type {
 
 import * as outputs from './output_adapters'
 import * as outputUtils from './output_utils'
-import { isObject } from './output_utils'
 
 /**
  * @typedef {Function} LoggerLogFunction
@@ -232,6 +231,7 @@ export const log = (
     forceLogging?: boolean | Record<string, unknown>
 ): void => {
     const outputContextId = contextId || id()
+    const isMessageObject = outputUtils.isObject(message)
     const logInstance: Log = {
         level,
         time: new Date(),
@@ -239,9 +239,9 @@ export const log = (
         contextId: outputContextId,
         meta: {},
         message: typeof message === 'string' ? message : outputContextId,
-        data: isObject(message) ? message : data,
+        data: isMessageObject ? message : data,
     }
-    const outputLogging = isObject(message) ? data : forceLogging
+    const outputLogging = isMessageObject ? data : forceLogging
     if (internals.globalContext) logInstance.meta = Object.assign({}, internals.globalContext)
 
     if (outputLogging || internals.loggers[namespace]?.isLevelEnabled(level)) write(logInstance)
