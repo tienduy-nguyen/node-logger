@@ -58,3 +58,14 @@ export const stringifyLog = (log: Record<string, unknown>): string => {
 
 export const isObject = (val: unknown): val is Record<string, unknown> =>
     !!val && typeof val === 'object' && !Array.isArray(val)
+
+export const memoize = <T extends (...args: unknown[]) => unknown>(fn: T): T => {
+    const cache = new Map<string, ReturnType<T>>()
+    return ((...args: unknown[]) => {
+        const key = JSON.stringify(args)
+        if (cache.has(key)) return cache.get(key) as ReturnType<T>
+        const result = fn(...args)
+        cache.set(key, result as ReturnType<T>)
+        return result
+    }) as T
+}

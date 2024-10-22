@@ -54,21 +54,23 @@ const log = (
     }
 }
 
-const isLevelEnabled = (namespace: string, level: number, config: LoggerConfig): boolean => {
-    let nsLevel = config.level
-    let nsMatch = false
-    for (const ns of config.namespaces.slice().reverse()) {
-        if (ns.regex?.test(namespace)) {
-            nsMatch = true
-            if (ns.level !== undefined) {
-                nsLevel = ns.level
-                break
+const isLevelEnabled = outputUtils.memoize(
+    (namespace: string, level: number, config: LoggerConfig): boolean => {
+        let nsLevel = config.level
+        let nsMatch = false
+        for (const ns of config.namespaces.slice().reverse()) {
+            if (ns.regex?.test(namespace)) {
+                nsMatch = true
+                if (ns.level !== undefined) {
+                    nsLevel = ns.level
+                    break
+                }
             }
         }
-    }
 
-    return nsMatch && level >= nsLevel
-}
+        return nsMatch && level >= nsLevel
+    }
+)
 
 const writeLog = (logInstance: Log, config: LoggerConfig): void => {
     for (const output of config.outputs) {
