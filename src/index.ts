@@ -108,13 +108,32 @@ export const createLogger = (
         const levelIsEnabled = isLevelEnabled(namespace, idx, config) || canForceWrite
         enabledLevels[level] = levelIsEnabled
         if (levelIsEnabled) {
-            logger[level] = ((
-                contextId: string,
-                message: string,
-                data?: Record<string, unknown>,
-                forceLogging?: boolean
-            ) => {
-                log(namespace, level, contextId, message, data, forceLogging, config)
+            logger[level] = ((...args: unknown[]) => {
+                if (typeof args[0] === 'string' && typeof args[1] === 'string') {
+                    // Handle the dual signature: (contextId, message, data?, forceLogging?)
+                    const [contextId, message, data, forceLogging] = args
+                    log(
+                        namespace,
+                        level,
+                        contextId as string,
+                        message as string,
+                        data as Record<string, unknown>,
+                        forceLogging as boolean | undefined,
+                        config
+                    )
+                } else {
+                    // Handle the signature: (message, data?, forceLogging?)
+                    const [message, data, forceLogging] = args
+                    log(
+                        namespace,
+                        level,
+                        undefined,
+                        message as string,
+                        data as Record<string, unknown>,
+                        forceLogging as boolean | undefined,
+                        config
+                    )
+                }
             }) as LogMethod
         } else {
             logger[level] = () => {}
