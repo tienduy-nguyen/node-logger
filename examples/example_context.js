@@ -7,4 +7,4 @@ logger.setGlobalContext({ version: '2.0.0', env: 'dev' })
 
 const log = logger.createLogger('namespace')
 
-log.warn('message', { someData: 'someValue' })
+log.warn('User login attempt failed', { username: 'johndoe', reason: 'Invalid password' })

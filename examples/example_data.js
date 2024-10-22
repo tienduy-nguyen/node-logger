@@ -6,4 +6,4 @@ logger.setLevel('info')
 
 const log = logger.createLogger('namespace:subNamespace')
 
-log.warn('message', { someData: 'someValue' })
+log.warn('User data is incomplete', { userId: 12345, missingFields: ['email', 'phoneNumber'] })

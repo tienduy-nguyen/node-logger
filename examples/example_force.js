@@ -6,4 +6,4 @@ logger.setLevel('info')
 
 const log = logger.createLogger('namespace', true)
 const num = 1
-log.debug('Will be logged', { someData: 'someValue' }, num > 0)
+log.info('Logging information', { action: 'checkNumber', value: num, isPositive: num > 0 })
