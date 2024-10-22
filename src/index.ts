@@ -14,13 +14,17 @@ import * as outputs from './output_adapters'
 import * as outputUtils from './output_utils'
 
 /************* LOCAL STATE *************/
-const defaultConfig: LoggerConfig = {
+const defaultConfig: Readonly<LoggerConfig> = {
     loggers: {},
     levels: ['trace', 'debug', 'info', 'warn', 'error', 'none'],
     outputs: [outputs.json],
     level: 3, // default to warn
     namespaces: [],
     globalContext: {},
+}
+
+const mutableConfig: LoggerConfig = {
+    ...defaultConfig,
 }
 
 /************* HELPER FUNCTION *************/
@@ -33,7 +37,7 @@ const log = (
     data: Record<string, unknown> | undefined,
     forceLogging: boolean | undefined,
     config: LoggerConfig
-) => {
+): void => {
     const definedContextId = contextId || id()
     const logInstance: Log = {
         level,
@@ -86,7 +90,7 @@ const parseNamespace = (namespace: string): NameSpaceConfig | undefined => {
 export const createLogger = (
     namespace = '',
     canForceWrite = false,
-    config = defaultConfig
+    config = mutableConfig
 ): Logger => {
     if (config.loggers[namespace]) return config.loggers[namespace]
 
@@ -133,7 +137,7 @@ export const id = (): string => uuidv4()
 /**
  * Define enabled / disabled namespaces
  */
-export const setNamespaces = (namespaceStr: string, config = defaultConfig): void => {
+export const setNamespaces = (namespaceStr: string, config = mutableConfig): void => {
     config.namespaces = namespaceStr
         .split(',')
         .map(parseNamespace)
@@ -143,7 +147,7 @@ export const setNamespaces = (namespaceStr: string, config = defaultConfig): voi
 /**
  * Change log level
  */
-export const setLevel = (level: LogLevel, config = defaultConfig): void => {
+export const setLevel = (level: LogLevel, config = mutableConfig): void => {
     const levelIndex = config.levels.indexOf(level)
     if (levelIndex === -1) throw new Error(`Invalid log level: ${level}`)
     config.level = levelIndex
@@ -154,7 +158,7 @@ export const setLevel = (level: LogLevel, config = defaultConfig): void => {
  */
 export const setOutput = (
     outputAdapters: OutputAdapter[] | OutputAdapter,
-    config = defaultConfig
+    config = mutableConfig
 ): void => {
     config.outputs = Array.isArray(outputAdapters) ? outputAdapters : [outputAdapters]
 }
@@ -167,7 +171,7 @@ export const setOutput = (
  */
 export const setGlobalContext = (
     context: Record<string, unknown>,
-    config = defaultConfig
+    config = mutableConfig
 ): void => {
     config.globalContext = { ...context }
 }
