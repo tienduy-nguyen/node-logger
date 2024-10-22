@@ -26,7 +26,7 @@ export const stringifyLog = (log: Record<string, unknown>): string => {
     try {
         return fastStringifyLog(log)
     } catch (e) {
-        return fastStringifyLog(log, getCircularReplacer())
+        return JSON.stringify(log, getCircularReplacer())
     }
 }
 

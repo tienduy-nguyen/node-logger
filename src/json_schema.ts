@@ -1,4 +1,4 @@
-const fastJson = require('fast-json-stringify')
+import fastJson from 'fast-json-stringify'
 
 const logSchema = {
     title: 'Log',
