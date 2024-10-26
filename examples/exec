@@ -1,5 +1,0 @@
-#!/bin/sh
-
-for file in examples/*.js; do
-    node "$file"
-done

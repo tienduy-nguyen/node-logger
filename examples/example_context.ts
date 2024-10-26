@@ -1,4 +1,4 @@
-const logger = require('../lib/index')
+import * as logger from '../src/index.js'
 
 logger.setOutput(logger.outputs.pretty)
 logger.setNamespaces('*')
