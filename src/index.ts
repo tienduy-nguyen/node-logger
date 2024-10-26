@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
+import crypto from 'node:crypto'
 import type {
     Log,
     LogLevel,
@@ -152,7 +152,7 @@ export const createLogger = (
 /**
  * Return an id that can be used as a contextId
  */
-export const id = (): string => uuidv4()
+export const id = (): string => crypto.randomUUID()
 
 /**
  * Define enabled / disabled namespaces
