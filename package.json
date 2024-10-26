@@ -7,7 +7,12 @@
     "tags": [
         "logger",
         "lightweight",
-        "namespaces"
+        "namespaces",
+        "debug",
+        "multioutput",
+        "logging",
+        "javascript",
+        "typescript"
     ],
     "repository": {
         "type": "git",
