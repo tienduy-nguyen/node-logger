@@ -8,10 +8,9 @@ import type {
     LoggerMethods,
     NameSpaceConfig,
     OutputAdapter,
-} from './definitions'
-
-import * as outputs from './output_adapters'
-import * as outputUtils from './output_utils'
+} from './definitions.js'
+import * as outputs from './output_adapters.js'
+import * as outputUtils from './output_utils.js'
 
 /************* LOCAL STATE *************/
 const defaultConfig: Readonly<LoggerConfig> = {
@@ -23,7 +22,7 @@ const defaultConfig: Readonly<LoggerConfig> = {
     globalContext: {},
 }
 
-const mutableConfig: LoggerConfig = {
+const sharedConfig: LoggerConfig = {
     ...defaultConfig,
 }
 
@@ -92,7 +91,7 @@ const parseNamespace = (namespace: string): NameSpaceConfig | undefined => {
 export const createLogger = (
     namespace = '',
     canForceWrite = false,
-    config = mutableConfig
+    config = sharedConfig
 ): Logger => {
     if (config.loggers[namespace]) return config.loggers[namespace]
 
@@ -158,7 +157,7 @@ export const id = (): string => uuidv4()
 /**
  * Define enabled / disabled namespaces
  */
-export const setNamespaces = (namespaceStr: string, config = mutableConfig): void => {
+export const setNamespaces = (namespaceStr: string, config = sharedConfig): void => {
     config.namespaces = namespaceStr
         .split(',')
         .map(parseNamespace)
@@ -168,7 +167,7 @@ export const setNamespaces = (namespaceStr: string, config = mutableConfig): voi
 /**
  * Change log level
  */
-export const setLevel = (level: LogLevel, config = mutableConfig): void => {
+export const setLevel = (level: LogLevel, config = sharedConfig): void => {
     const levelIndex = config.levels.indexOf(level)
     if (levelIndex === -1) throw new Error(`Invalid log level: ${level}`)
     config.level = levelIndex
@@ -179,7 +178,7 @@ export const setLevel = (level: LogLevel, config = mutableConfig): void => {
  */
 export const setOutput = (
     outputAdapters: OutputAdapter[] | OutputAdapter,
-    config = mutableConfig
+    config = sharedConfig
 ): void => {
     config.outputs = Array.isArray(outputAdapters) ? outputAdapters : [outputAdapters]
 }
@@ -190,10 +189,7 @@ export const setOutput = (
  * Be warned this context will be added to all logs,
  * even those from third party libraries if they use this module.
  */
-export const setGlobalContext = (
-    context: Record<string, unknown>,
-    config = mutableConfig
-): void => {
+export const setGlobalContext = (context: Record<string, unknown>, config = sharedConfig): void => {
     config.globalContext = { ...context }
 }
 
@@ -205,7 +201,7 @@ setNamespaces(namespaces)
 setLevel(logLevel)
 
 /************* EXPORT *************/
-export * from './definitions'
+export * from './definitions.js'
 export { outputUtils, outputs }
 export default {
     createLogger,

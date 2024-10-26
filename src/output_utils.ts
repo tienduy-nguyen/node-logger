@@ -1,5 +1,5 @@
-import type { ReplacerFunction } from './definitions'
-import { fastStringifyLog } from './json_schema'
+import type { ReplacerFunction } from './definitions.js'
+import { fastStringifyLog } from './json_schema.js'
 
 /**
  * Replace circular reference when used with JSON.stringify
@@ -33,7 +33,8 @@ export const stringifyLog = (log: Record<string, unknown>): string => {
 export const isObject = (val: unknown): val is Record<string, unknown> =>
     !!val && typeof val === 'object' && !Array.isArray(val)
 
-export const memoize = <T extends (...args: unknown[]) => unknown>(fn: T): T => {
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export const memoize = <T extends (...args: any[]) => unknown>(fn: T): T => {
     const cache = new Map<string, ReturnType<T>>()
     return ((...args: unknown[]) => {
         const key = JSON.stringify(args)

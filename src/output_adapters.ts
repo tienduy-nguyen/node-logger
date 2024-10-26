@@ -1,8 +1,8 @@
-const prettyOutput = require('prettyoutput')
 import { Writable } from 'node:stream'
-import { colors } from './colors'
-import type { Log, LogColor, LogLevel, Output } from './definitions'
-import { stringifyLog } from './output_utils'
+import prettyOutput from 'prettyoutput'
+import { colors } from './colors.js'
+import type { Log, LogColor, LogLevel, Output } from './definitions.js'
+import { stringifyLog } from './output_utils.js'
 
 /**
  * Object mapping log color and log level
