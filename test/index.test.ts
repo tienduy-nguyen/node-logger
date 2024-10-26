@@ -82,6 +82,16 @@ describe('Logger Module', () => {
 
             expect(config.outputs).toContainEqual(outputAdapter)
         })
+
+        it('should set the output adapters array', () => {
+            const config = {
+                ...shareConfig,
+            }
+            const outputAdapter = vi.fn()
+            setOutput([outputAdapter], config)
+
+            expect(config.outputs).toContainEqual(outputAdapter)
+        })
     })
 
     describe('setGlobalContext', () => {
