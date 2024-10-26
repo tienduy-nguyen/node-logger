@@ -19,8 +19,20 @@
         }
     ],
     "type": "module",
-    "main": "lib/index.js",
-    "types": "lib/index.d.ts",
+    "main": "lib/esm/index.js",
+    "types": "lib/esm/index.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "default": "./lib/esm/index.js",
+                "types": "./lib/esm/index.d.ts"
+            },
+            "require": {
+                "default": "./lib/cjs/index.js",
+                "types": "./lib/cjs/index.d.ts"
+            }
+        }
+    },
     "files": [
         "/lib"
     ],
@@ -50,13 +62,15 @@
     "scripts": {
         "lint": "biome check --write",
         "check": "biome check",
-        "build": "rm -rf lib && tsc --build tsconfig.lib.json",
+        "build": "tsx scripts/build.ts",
         "prepublishOnly": "rm -rf lib && yarn build",
         "test": "ava",
         "test-cover": "nyc ava",
         "coverage": "nyc ava | coveralls",
         "version": "echo ${npm_package_version}",
         "examples": "./examples/exec.sh",
+        "examples-esm": "./examples/esm/exec.sh",
+        "examples-cjs": "./examples/cjs/exec.sh",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
     "eslintIgnore": [
