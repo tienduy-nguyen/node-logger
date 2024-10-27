@@ -1,72 +1,66 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-    createLogger,
-    id,
-    setGlobalContext,
-    setLevel,
-    setNamespaces,
-    setOutput,
-} from '../src/index.js'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as loggerModule from '../src/index.js'
 import type { LogLevel, Logger, LoggerConfig } from '../src/index.js'
 import * as outputs from '../src/output_adapters.js'
 
 describe('Logger Module', () => {
     let logger: Logger
-    const testNamespace = 'test:*'
 
-    const shareConfig: LoggerConfig = {
+    const sharedConfig: LoggerConfig = {
         loggers: {},
         levels: ['trace', 'debug', 'info', 'warn', 'error', 'none'],
-        outputs: [outputs.json],
+        outputs: [outputs.json, outputs.pretty],
         level: 3,
         namespaces: [],
         globalContext: {},
     }
-
-    beforeEach(() => {
-        logger = createLogger('testLogger')
-    })
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
     describe('createLogger', () => {
         it('should create a logger instance', () => {
-            const newLogger = createLogger('newLogger')
+            const newLogger = loggerModule.createLogger('newLogger')
             expect(newLogger).toBeDefined()
             expect(newLogger).not.toBe(logger)
         })
 
         it('should return the same logger for the same namespace', () => {
-            const newLogger = createLogger('testLogger')
+            logger = loggerModule.createLogger('test:logger')
+            const newLogger = loggerModule.createLogger('test:logger')
             expect(newLogger).toBe(logger)
         })
     })
 
     describe('setNamespaces', () => {
+        let config: LoggerConfig
+
+        beforeEach(() => {
+            config = { ...sharedConfig, namespaces: [] }
+        })
+
         it('should set namespaces correctly', () => {
-            const config = {
-                ...shareConfig,
-            }
-            setNamespaces(testNamespace, config)
+            loggerModule.setNamespaces('routeA', config)
             const parsedNamespaces = config.namespaces
+
             expect(parsedNamespaces.length).toBeGreaterThan(0)
-            expect(parsedNamespaces[0]?.regex?.test('test:namespace')).toBe(true)
+            expect(parsedNamespaces[0]?.regex?.test('routeA')).toBe(true)
         })
 
         it('should handle invalid namespace input', () => {
-            expect(() => setNamespaces('invalid*namespace')).not.toThrow()
+            expect(() => loggerModule.setNamespaces('invalid*namespace', config)).not.toThrow()
         })
     })
 
     describe('setLevel', () => {
         it('should set the log level correctly', () => {
             const config = {
-                ...shareConfig,
+                ...sharedConfig,
             }
-            setLevel('info', config)
+            loggerModule.setLevel('info', config)
             expect(config.level).toBe(2)
         })
 
         it('should throw an error for invalid log level', () => {
-            expect(() => setLevel('invalidLevel' as unknown as LogLevel)).toThrow(
+            expect(() => loggerModule.setLevel('invalidLevel' as unknown as LogLevel)).toThrow(
                 'Invalid log level: invalidLevel'
             )
         })
@@ -75,20 +69,20 @@ describe('Logger Module', () => {
     describe('setOutput', () => {
         it('should set the output adapter', () => {
             const config = {
-                ...shareConfig,
+                ...sharedConfig,
             }
             const outputAdapter = vi.fn()
-            setOutput(outputAdapter, config)
+            loggerModule.setOutput(outputAdapter, config)
 
             expect(config.outputs).toContainEqual(outputAdapter)
         })
 
         it('should set the output adapters array', () => {
             const config = {
-                ...shareConfig,
+                ...sharedConfig,
             }
             const outputAdapter = vi.fn()
-            setOutput([outputAdapter], config)
+            loggerModule.setOutput([outputAdapter], config)
 
             expect(config.outputs).toContainEqual(outputAdapter)
         })
@@ -97,96 +91,116 @@ describe('Logger Module', () => {
     describe('setGlobalContext', () => {
         it('should set global context correctly', () => {
             const config = {
-                ...shareConfig,
+                ...sharedConfig,
             }
             const globalContext = { user: 'testUser' }
-            setGlobalContext(globalContext, config)
+            loggerModule.setGlobalContext(globalContext, config)
             expect(config.globalContext).toEqual(globalContext)
         })
     })
 
-    // describe('logging methods', () => {
-    //     const testNamespace = 'test:*'
-    //     const logMessages: unknown[] = []
-    //     const writeSpy = vi.spyOn(outputs.logStream, 'write')
-    //     const mockOutput = (logInstance: unknown) => {
-    //         logMessages.push(logInstance)
-    //     }
-    //     const config = {
-    //         ...shareConfig,
-    //     }
+    describe('logging methods', () => {
+        const outputMock = vi.fn()
+        const now = new Date('2021-01-01T00:00:00Z')
+        let config: LoggerConfig
 
-    //     beforeEach(() => {
-    //         logger = createLogger('testLogger')
-    //         setNamespaces(testNamespace, config)
-    //         setLevel('info', config)
-    //         config.outputs = [mockOutput]
-    //     })
-    //     afterEach(() => {
-    //         writeSpy.mockClear()
-    //     })
+        beforeAll(() => {
+            vi.useFakeTimers().setSystemTime(now)
+        })
 
-    //     it.only('should log messages correctly with contextId', () => {
-    //         logger.info('ctxId', 'Test message', { data: 'testData' })
+        beforeEach(() => {
+            outputMock.mockClear()
+            config = {
+                loggers: {},
+                levels: ['trace', 'debug', 'info', 'warn', 'error', 'none'],
+                outputs: [outputMock],
+                level: 3,
+                namespaces: [],
+                globalContext: {},
+            }
+        })
+        afterAll(() => {
+            outputMock.mockRestore()
+            vi.useRealTimers()
+        })
 
-    //         expect(config).toMatchObject({
-    //             level: 2,
-    //         })
-    //         expect(writeSpy).toHaveBeenCalled()
-    //     })
+        it('should call output adapter with log data, metadata, message, and data', () => {
+            loggerModule.setNamespaces('test1:*', config)
+            loggerModule.setLevel('info', config)
+            loggerModule.setOutput([outputMock])
 
-    //     it('should call process.stdout.write when logging', () => {
-    //         logger.info('ctxId', 'Test message', { data: 'testData' })
+            const log = loggerModule.createLogger('test1:subTest1')
 
-    //         expect(writeSpy).toHaveBeenCalled()
+            log.warn('ctxId', 'test', { someData: 'someValue' })
 
-    //         const writtenData = writeSpy.mock?.calls?.[0]?.[0]
-    //         expect(writtenData).toContain('Test message')
-    //     })
+            expect(outputMock).toHaveBeenCalledOnce()
 
-    //     it('should not call process.stdout.write when log level is not enabled', () => {
-    //         setLevel('error')
-    //         logger.info('ctxId', 'Should not log this message')
+            const outputArg = outputMock.mock.calls[0]?.[0]
+            expect(outputArg.namespace).toBe('test1:subTest1')
+            expect(outputArg.level).toBe('warn')
+            expect(outputArg.time.getTime()).toBe(now.getTime())
+            expect(outputArg.contextId).toBe('ctxId')
+            expect(outputArg.message).toBe('test')
+            expect(outputArg.data).toEqual({ someData: 'someValue' })
+        })
 
-    //         expect(writeSpy).not.toHaveBeenCalled()
-    //     })
+        it('should log and create auto contextId when do not given context id', () => {
+            loggerModule.setNamespaces('test2:*', config)
+            loggerModule.setLevel('warn', config)
+            loggerModule.setOutput([outputMock])
 
-    //     it('should log messages correctly without contextId', () => {
-    //         logger.warn('Test warning')
-    //         expect(writeSpy).toHaveBeenCalled()
-    //     })
+            const log = loggerModule.createLogger('test2:subTest2')
 
-    //     it('should not log if level is not enabled', () => {
-    //         setLevel('error', config)
-    //         logger.info('ctxId', 'Should not log this message')
+            log.error('test', { someData: 'someValue' })
 
-    //         expect(logMessages.length).toBe(2)
-    //         expect(logMessages[0]).toMatchObject({
-    //             level: 'info',
-    //             contextId: 'ctxId',
-    //             message: 'Test message',
-    //             data: { data: 'testData' },
-    //         })
-    //         expect(writeSpy).toHaveBeenCalled()
-    //     })
+            expect(outputMock).toHaveBeenCalledOnce()
 
-    //     it('should force logging when forceLogging is true', () => {
-    //         logger.info('ctxId', 'Force log message', undefined, true)
+            const outputArg = outputMock.mock.calls[0]?.[0]
+            expect(outputArg.namespace).toBe('test2:subTest2')
+            expect(outputArg.level).toBe('error')
+            expect(outputArg.time.getTime()).toBe(now.getTime())
+            expect(outputArg.contextId).toMatch(uuidRegex)
+            expect(outputArg.message).toBe('test')
+            expect(outputArg.data).toEqual({ someData: 'someValue' })
+        })
 
-    //         expect(logMessages[2]).toMatchObject({
-    //             level: 'info',
-    //             contextId: 'ctxId',
-    //             message: 'Force log message',
-    //         })
-    //     })
-    // })
+        it('should not log if level is below the configured log level', () => {
+            loggerModule.setNamespaces('test3:*', config)
+            loggerModule.setLevel('warn', config)
+            loggerModule.setOutput([outputMock])
+
+            const log = loggerModule.createLogger('test3:subTest3')
+
+            log.debug('ctxId', 'test', { someData: 'someValue' })
+
+            expect(outputMock).not.toHaveBeenCalled()
+        })
+
+        it('should log if forceLogging is enabled regardless of level', () => {
+            loggerModule.setNamespaces('test4:*', config)
+            loggerModule.setLevel('warn', config)
+            loggerModule.setOutput([outputMock])
+
+            const log = loggerModule.createLogger('test4:subTest4', true)
+
+            log.debug('ctxId', 'test', { someData: 'someValue' })
+
+            expect(outputMock).toHaveBeenCalledOnce()
+
+            const outputArg = outputMock.mock.calls[0]?.[0]
+            expect(outputArg.namespace).toBe('test4:subTest4')
+            expect(outputArg.level).toBe('debug')
+            expect(outputArg.time.getTime()).toBe(now.getTime())
+            expect(outputArg.contextId).toBe('ctxId')
+            expect(outputArg.message).toBe('test')
+            expect(outputArg.data).toEqual({ someData: 'someValue' })
+        })
+    })
 
     describe('id function', () => {
         it('should generate a unique id', () => {
-            const uniqueId = id()
-            expect(uniqueId).toMatch(
-                /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-            )
+            const uniqueId = loggerModule.id()
+            expect(uniqueId).toMatch(uuidRegex)
         })
     })
 })

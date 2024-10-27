@@ -4,19 +4,6 @@ import { colors } from '../src/colors.js'
 import { json, logStream, pretty, prettyTime, twoDigitNumber } from '../src/output_adapters.js'
 
 describe('Log Output Adapters', () => {
-    let writeOutputStub: ReturnType<typeof vi.spyOn>
-
-    beforeAll(() => {
-        writeOutputStub = vi.spyOn(logStream, 'write') as unknown as ReturnType<typeof vi.spyOn>
-    })
-
-    beforeEach(() => {
-        writeOutputStub.mockImplementation(() => {})
-    })
-
-    afterEach(() => writeOutputStub.mockClear())
-    afterAll(() => writeOutputStub.mockRestore())
-
     const time = new Date(1547205226232)
     const timeFormatted = '2019-01-11 11:13:46'
 
@@ -46,6 +33,19 @@ describe('Log Output Adapters', () => {
     })
 
     describe('pretty', () => {
+        let writeOutputStub: ReturnType<typeof vi.spyOn>
+
+        beforeAll(() => {
+            writeOutputStub = vi.spyOn(logStream, 'write') as unknown as ReturnType<typeof vi.spyOn>
+        })
+
+        beforeEach(() => {
+            writeOutputStub.mockImplementation(() => {})
+        })
+
+        afterEach(() => writeOutputStub.mockClear())
+        afterAll(() => writeOutputStub.mockRestore())
+
         it('writes formatted log output to stdout', () => {
             pretty({
                 level: 'warn',
@@ -63,6 +63,19 @@ describe('Log Output Adapters', () => {
     })
 
     describe('json', () => {
+        let writeOutputStub: ReturnType<typeof vi.spyOn>
+
+        beforeAll(() => {
+            writeOutputStub = vi.spyOn(logStream, 'write') as unknown as ReturnType<typeof vi.spyOn>
+        })
+
+        beforeEach(() => {
+            writeOutputStub.mockImplementation(() => {})
+        })
+
+        afterEach(() => writeOutputStub.mockClear())
+        afterAll(() => writeOutputStub.mockRestore())
+
         it('writes JSON formatted log output to stdout', () => {
             json({
                 level: 'warn',
@@ -93,6 +106,54 @@ describe('Log Output Adapters', () => {
             expect(writeOutputStub).toHaveBeenCalledWith(
                 `{"level":"warn","namespace":"test1","contextId":"ctxId","message":"test message","data":{"someData":"someValue"},"field1":"value1"}\n`
             )
+        })
+    })
+
+    describe('logStream', () => {
+        let writeSpy: ReturnType<typeof vi.spyOn>
+
+        beforeEach(() => {
+            writeSpy = vi.spyOn(process.stdout, 'write') as unknown as ReturnType<typeof vi.spyOn>
+            writeSpy.mockImplementation(() => {})
+        })
+
+        afterEach(() => {
+            writeSpy.mockRestore()
+        })
+
+        it('should write chunk to process.stdout with specified encoding', () => {
+            const testChunk = Buffer.from('test log data')
+            const testEncoding = 'utf8'
+
+            logStream.write(testChunk, testEncoding, (error) => {
+                expect(error).toBeUndefined()
+                expect(writeSpy).toHaveBeenCalledOnce()
+                expect(writeSpy).toHaveBeenCalledWith(testChunk, testEncoding, expect.any(Function))
+            })
+        })
+
+        it('should handle multiple writes', () => {
+            const chunks = ['log1', 'log2', 'log3']
+            const encoding = 'utf8'
+            let callbackCount = 0
+
+            chunks.forEach((chunk, index) => {
+                logStream.write(chunk, encoding, (error) => {
+                    expect(error).toBeUndefined()
+                    callbackCount++
+                    if (index === chunks.length - 1) {
+                        expect(writeSpy).toHaveBeenCalledTimes(chunks.length)
+                        chunks.forEach((chk, idx) => {
+                            expect(writeSpy).toHaveBeenNthCalledWith(
+                                idx + 1,
+                                chk,
+                                encoding,
+                                expect.any(Function)
+                            )
+                        })
+                    }
+                })
+            })
         })
     })
 })
