@@ -19,6 +19,8 @@ A lightweight, flexible logger that merges debug-style namespace management, Win
     -   [Log data and metadata](#log-data-and-metadata)
         -   [Adding global metadata](#adding-global-metadata)
     -   [Force logging](#force-logging)
+-   [Benchmark](#benchmark)
+-   [Contributing](#contributing)
 
 ## Features
 - **Configurable log levels**: Set log levels globally or per namespace for detailed control.
@@ -184,6 +186,22 @@ Override the log level for critical messages by forcing them to be logged:
 ```js
 logger.debug('Will be logged regardless of level', { forceLogging: true });
 ```
+
+## Benchmark
+Below is a performance comparison of several popular Node.js logging libraries, including @ekino/logger. Benchmarks were conducted using Node.js v22.10.0, with results measured in operations per second (higher values indicate better performance).
+```bash
+┌─────────┬──────────────────────┬───────────┐
+│ (index) │ library              │ ops/sec   │
+├─────────┼──────────────────────┼───────────┤
+│ 0       │ 'Pino'               │ '124,828' │
+│ 1       │ '@ekino/logger v3.x' │ '118,385' │
+│ 2       │ '@ekino/logger v2.x' │ '104,004' │
+│ 3       │ 'Winston'            │ '67,536'  │
+└─────────┴──────────────────────┴───────────┘
+```
+**Note**: Benchmark results may vary depending on environment and configuration. This table provides a general reference for relative performance between libraries.
+
+For more detailed benchmark results, please refer to the [benchmarks](./benchmarks/) folder.
 
 ## Contributing
 
