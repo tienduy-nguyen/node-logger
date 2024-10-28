@@ -71,26 +71,5 @@
         "examples-cjs": "./examples/cjs/exec.sh",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
-    "eslintIgnore": [
-        "lib",
-        "examples"
-    ],
-    "ava": {
-        "files": [
-            "test/**/*.js"
-        ],
-        "extensions": [
-            "js"
-        ],
-        "require": [
-            "ts-node/register"
-        ]
-    },
-    "nyc": {
-        "reporter": [
-            "lcov",
-            "text-lcov"
-        ]
-    },
     "packageManager": "yarn@4.5.1"
 }
