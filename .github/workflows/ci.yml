@@ -26,6 +26,9 @@ jobs:
       - name: Check linter
         run: yarn check
 
+      - name: Check typing
+        run: yarn tsc -p tsconfig.lib.json --noEmit
+
       - name: Run tests with coverage
         run: yarn coverage
         env:
