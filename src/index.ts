@@ -37,20 +37,20 @@ const log = (
     forceLogging: boolean | undefined,
     config: LoggerConfig
 ): void => {
+    if (!forceLogging && !config.loggers[namespace]?.isLevelEnabled(level)) return
+
     const definedContextId = contextId || id()
     const logInstance: Log = {
         level,
         time: new Date(),
         namespace,
         contextId: definedContextId,
-        meta: { ...config.globalContext },
+        meta: config.globalContext,
         message: typeof message === 'string' ? message : definedContextId,
         data: outputUtils.isObject(message) ? message : data,
     }
 
-    if (forceLogging || config.loggers[namespace]?.isLevelEnabled(level)) {
-        writeLog(logInstance, config)
-    }
+    writeLog(logInstance, config)
 }
 
 const isLevelEnabled = outputUtils.memoize(
