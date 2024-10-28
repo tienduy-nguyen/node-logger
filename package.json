@@ -73,6 +73,7 @@
         "examples": "./examples/exec.sh",
         "examples-esm": "./examples/esm/exec.sh",
         "examples-cjs": "./examples/cjs/exec.sh",
+        "benchmark": "node ./benchmarks/basic.js",
         "postinstall": "git config core.hooksPath ./.githooks || true"
     },
     "packageManager": "yarn@4.5.1"

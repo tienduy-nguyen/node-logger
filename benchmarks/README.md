@@ -1,13 +1,13 @@
 # BENCHMARKS
 
-- Tested on Nodejs 22.8.0
+- Tested on Nodejs 22.10.0
 ```bash
 ┌─────────┬──────────────────────┬───────────┐
-│ (index) │       library        │  ops/sec  │
+│ (index) │ library              │ ops/sec   │
 ├─────────┼──────────────────────┼───────────┤
-│    0    │        'Pino'        │ '181,851' │
-│    1    │ '@ekino/logger v3.x' │ '160,179' │
-│    2    │ '@ekino/logger v2.x' │ '136,705' │
-│    3    │      'Winston'       │ '86,693'  │
+│ 0       │ 'Pino'               │ '124,828' │
+│ 1       │ '@ekino/logger v3.x' │ '118,385' │
+│ 2       │ '@ekino/logger v2.x' │ '104,004' │
+│ 3       │ 'Winston'            │ '67,536'  │
 └─────────┴──────────────────────┴───────────┘
 ```
