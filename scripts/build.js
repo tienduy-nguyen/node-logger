@@ -2,7 +2,6 @@
 import { exec } from 'node:child_process'
 import { writeFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
-import { colors } from '../src/colors.js'
 
 const execAsync = promisify(exec)
 
@@ -19,12 +18,12 @@ async function run() {
             writeFile('lib/cjs/package.json', '{"type": "commonjs"}'),
         ])
 
-        console.log(colors.green('Compilation successful'))
+        console.log('Compilation successful')
     } catch (error) {
         if (error instanceof Error) {
-            console.error(colors.red('Compilation failed:'), error.message)
+            console.error('Compilation failed:', error.message)
         } else {
-            console.error(colors.red('Compilation failed:'), error)
+            console.error('Compilation failed:', error)
         }
     }
 }
