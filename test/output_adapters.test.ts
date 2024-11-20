@@ -1,5 +1,15 @@
 import prettyOutput from 'prettyoutput'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+    type MockInstance,
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from 'vitest'
 import { colors } from '../src/colors.js'
 import { json, logStream, pretty, prettyTime, twoDigitNumber } from '../src/output_adapters.js'
 
@@ -33,10 +43,10 @@ describe('Log Output Adapters', () => {
     })
 
     describe('pretty', () => {
-        let writeOutputStub: ReturnType<typeof vi.spyOn>
+        let writeOutputStub: MockInstance
 
         beforeAll(() => {
-            writeOutputStub = vi.spyOn(logStream, 'write') as unknown as ReturnType<typeof vi.spyOn>
+            writeOutputStub = vi.spyOn(logStream, 'write')
         })
 
         beforeEach(() => {
@@ -63,10 +73,10 @@ describe('Log Output Adapters', () => {
     })
 
     describe('json', () => {
-        let writeOutputStub: ReturnType<typeof vi.spyOn>
+        let writeOutputStub: MockInstance
 
         beforeAll(() => {
-            writeOutputStub = vi.spyOn(logStream, 'write') as unknown as ReturnType<typeof vi.spyOn>
+            writeOutputStub = vi.spyOn(logStream, 'write')
         })
 
         beforeEach(() => {
@@ -110,10 +120,10 @@ describe('Log Output Adapters', () => {
     })
 
     describe('logStream', () => {
-        let writeSpy: ReturnType<typeof vi.spyOn>
+        let writeSpy: MockInstance
 
         beforeEach(() => {
-            writeSpy = vi.spyOn(process.stdout, 'write') as unknown as ReturnType<typeof vi.spyOn>
+            writeSpy = vi.spyOn(process.stdout, 'write')
             writeSpy.mockImplementation(() => {})
         })
 
