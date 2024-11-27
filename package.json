@@ -51,14 +51,14 @@
     "devDependencies": {
         "@biomejs/biome": "1.9.4",
         "@ekino/logger": "2.1.1",
-        "@jonahsnider/benchmark": "^5.1.1",
-        "@types/node": "22.7.7",
-        "@vitest/coverage-v8": "2.1.3",
-        "commitlint": "19.5.0",
-        "pino": "^9.5.0",
-        "typescript": "5.6.3",
-        "vitest": "^2.1.3",
-        "winston": "^3.15.0"
+        "@jonahsnider/benchmark": "5.1.1",
+        "@types/node": "22.10.0",
+        "@vitest/coverage-v8": "2.1.6",
+        "commitlint": "19.6.0",
+        "pino": "9.5.0",
+        "typescript": "5.7.2",
+        "vitest": "2.1.6",
+        "winston": "3.17.0"
     },
     "scripts": {
         "lint": "biome check --write",
